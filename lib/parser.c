@@ -90,25 +90,30 @@ int strpcmp(const void *s1, const void *s2)
     return _strcmpl(*(char **) s1, *(char **) s2);
 }
 
+keyword_t searchDirections(const char *s)
+{
+    ql_iter qli;
+    for (qli=qli_init(&dirData);qli_more(qli);) {
+        dirStruct *d = (dirStruct *)qli_next(&qli);
+        if ( (!_strcmpl(s, d->shortName)) ||
+             (!_strcmpl(s, d->longName)) ) {
+            return d->token;
+        }
+    }
+    return -1;
+}
+
 keyword_t findkeyword(const char *s)
 {
     const char **sp;
+    keyword_t ret;
 
     if (!_strcmpl(s, "describe"))
         return K_DISPLAY;
-    if (!_strcmpl(s, "n"))
-        return K_NORTH;
-    if (!_strcmpl(s, "s"))
-        return K_SOUTH;
-    if (!_strcmpl(s, "e"))
-        return K_EAST;
-    if (!_strcmpl(s, "w"))
-        return K_WEST;
-    if (!_strcmpl(s, "m"))
-        return K_MIR;
-    if (!_strcmpl(s, "y"))
-        return K_YDD;
-
+    ret = searchDirections(s);
+    if (ret != -1) {
+        return ret;
+    }
     sp = (const char **)bsearch(&s, keywords, MAXKEYWORDS, sizeof s, strpcmp);
     if (sp == 0)
         return -1;

@@ -1109,6 +1109,7 @@ static void test_connectregions(CuTest * tc)
 
     cleargame(true);
     setup_terrains();
+    read_directions();
     config.width = 3;
     config.height = 3;
     r1 = create_region(0, 0, 0, get_terrain(T_PLAIN));
@@ -1253,6 +1254,7 @@ static void test_cfg_moves_off(CuTest * tc)
 
     cleargame(true);
     setup_terrains();
+    read_directions();
     config.features = 0;
     config.moves = 0;
     r1 = create_region(0, 0, 0, get_terrain(T_PLAIN));

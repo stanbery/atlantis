@@ -23,7 +23,6 @@ struct ship;
 struct building;
 
 extern int ignore_password;
-extern const keyword_t directions[];
 
 int distribute(int old, int nyu, int n);
 int getseen(struct region *r, const struct faction *f, struct unit **uptr);
@@ -47,13 +46,11 @@ void update_world(int minx, int miny, int maxx, int maxy);
 int autoworld(const char * playerfile);
 void connectregions(void);
 
-int transform(int *x, int *y, int kwd);
 void rnd_seed(unsigned long x);
 void createcontinent(void);
 void addplayers(struct region * r, struct stream * strm);
 void addunits(void);
 int cansee(const struct faction * f, struct region * r, const struct unit * u);
-struct region *movewhere(struct region * r);
 int effskill(const struct unit * u, int i);
 
 struct faction * addplayer(struct region * r, const char * email, int no);

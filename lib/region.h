@@ -11,6 +11,7 @@
 
 #include "settings.h"
 #include "bool.h"
+#include "keywords.h"
 
 struct building;
 struct ship;
@@ -33,6 +34,17 @@ typedef enum {
 #define NUMTERRAINS 5
 
 extern const char *terrainnames[];
+
+typedef struct dirStruct {
+    keyword_t token;
+    int xMod;
+    int yMod;
+    char * shortName;
+    char * longName;
+} dirStruct;
+
+extern const keyword_t directions[];
+extern struct quicklist *dirData;
 
 typedef struct region {
     unsigned int uid;
@@ -69,5 +81,11 @@ struct terrain *create_terrain(const char * name);
 struct terrain *get_terrain(terrain_t t);
 struct terrain *get_terrain_by_name(const char *name);
 void free_terrains(void);
+
+struct region *movewhere(struct region *r);
+int transform_kwd(int *x, int *y, keyword_t kwd);
+int transform(int *x, int *y, int direction);
+
+void read_directions();
 
 #endif

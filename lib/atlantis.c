@@ -39,7 +39,6 @@
 
 int ignore_password = 0;
 
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,6 +106,8 @@ const char *keywords[] = {
     "move",
     "name",
     "north",
+    "northeast",
+    "northwest",
     "password",
     "pay",
     "produce",
@@ -119,6 +120,8 @@ const char *keywords[] = {
     "ship",
     "sink",
     "south",
+    "southeast",
+    "southwest",
     "stack",
     "study",
     "tax",
@@ -445,8 +448,6 @@ const char *regionnames[] = {
     "Zamora",
     "Zapulla",
 };
-
-const keyword_t directions[MAXDIRECTIONS] = { K_NORTH, K_SOUTH, K_EAST, K_WEST, K_MIR, K_YDD };
 
 char itemskill[] = {
     SK_MINING,
@@ -784,50 +785,6 @@ FILE * cfopen(const char *filename, const char *mode)
         exit(1);
     }
     return F;
-}
-
-static int transform_kwd(int *x, int *y, keyword_t kwd)
-{
-    assert(x || !"invalid reference to X coordinate");
-    assert(y || !"invalid reference to Y coordinate");
-    if (kwd==K_NORTH) {
-        --*y;
-    }
-    else if (kwd==K_SOUTH) {
-        ++*y;
-    }
-    else if (kwd==K_WEST) {
-        --*x;
-    }
-    else if (kwd==K_EAST) {
-        ++*x;
-    }
-    else if (kwd==K_MIR) {
-        --*x;
-        --*y;
-    }
-    else if (kwd==K_YDD) {
-        ++*x;
-        ++*y;
-    }
-    else {
-        return EINVAL;
-    }
-    if (config.width && config.height) {
-        if (*x<0) *x+=config.width;
-        if (*y<0) *y+=config.height;
-        if (*x>=config.width) *x-=config.width;
-        if (*y>=config.height) *y-=config.height;
-    }
-    return 0;
-}
-
-int transform(int *x, int *y, int direction)
-{
-    keyword_t kwd;
-    assert(direction<=MAXDIRECTIONS);
-    kwd = (direction<MAXDIRECTIONS) ? directions[direction] : MAXKEYWORDS;
-    return transform_kwd(x, y, kwd);
 }
 
 int effskill(const unit * u, int i)
@@ -2583,46 +2540,6 @@ int magicians(faction * f)
         }
     }
     return n;
-}
-
-region *movewhere(region * r)
-{
-    int dir = -1;
-    keyword_t kwd = (keyword_t)getkeyword();
-
-    switch (kwd) {
-    case K_NORTH:
-        dir = 0;
-        break;
-
-    case K_SOUTH:
-        dir = 1;
-        break;
-
-    case K_EAST:
-        dir = 2;
-        break;
-
-    case K_WEST:
-        dir = 3;
-        break;
-#if MAXDIRECTIONS > 5
-    case K_MIR:
-        dir = 4;
-        break;
-
-    case K_YDD:
-        dir = 5;
-        break;
-#endif
-    default:
-        dir = -1;
-    }
-
-    if (dir>=0) {
-        return r->connect[dir];
-    }
-    return 0;
 }
 
 void process_form(unit *u, region *r) {
@@ -5034,6 +4951,10 @@ int writegame(void)
 
 void initgame(void)
 {
+    /* init any desired global data here */
+    read_directions();
+
+    /* read game status here */
     if (turn < 0) {
         turn = 0;
         _mkdir("data");

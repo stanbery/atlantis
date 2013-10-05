@@ -1,6 +1,10 @@
 #ifndef KEYWORDS_H
 #define KEYWORDS_H
 
+/*
+ * LS - unfortunately, we still have north, etc. in here;
+ * should look at removal
+ */
 typedef enum {
     K_ACCEPT,
     K_ADDRESS,
@@ -32,6 +36,8 @@ typedef enum {
     K_MOVE,
     K_NAME,
     K_NORTH,
+    K_NORTHEAST,
+    K_NORTHWEST,
     K_PASSWORD,
     K_PAY,
     K_PRODUCE,
@@ -44,6 +50,8 @@ typedef enum {
     K_SHIP,
     K_SINK,
     K_SOUTH,
+    K_SOUTHEAST,
+    K_SOUTHWEST,
     K_STACK,
     K_STUDY,
     K_TAX,

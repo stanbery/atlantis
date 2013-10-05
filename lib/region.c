@@ -4,10 +4,12 @@
 #include "ship.h"
 #include "building.h"
 #include "rtl.h"
+#include "parser.h"
 
 #include <quicklist.h>
 #include <mtrand.h>
 
+#include <errno.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -17,6 +19,16 @@ quicklist *regions;
 #define RHASHMASK (RMAXHASH-1)
 struct region *regionhash[RMAXHASH];
 struct quicklist *terrains;
+struct quicklist *dirData;
+
+#if MAXDIRECTIONS>5
+const keyword_t directions[MAXDIRECTIONS] = { K_NORTH, K_SOUTH, K_EAST, K_WEST, K_MIR, K_YDD };
+#else
+const keyword_t directions[MAXDIRECTIONS] = { K_NORTH, K_SOUTH, K_EAST, K_WEST };
+#endif
+/*
+const keyword_t directions[MAXDIRECTIONS] = { K_NORTH, K_NORTHEAST, K_NORTHWEST, K_SOUTH, K_SOUTHEAST, K_SOUTHWEST };
+*/
 
 region * create_region(unsigned int uid, int x, int y, const terrain * t)
 {
@@ -275,4 +287,115 @@ void free_terrains(void) {
     ql_foreach(terrains, (ql_cb)free_terrain);
     ql_free(terrains);
     terrains = 0;
+}
+
+region *movewhere(region * r)
+{
+    int dir = -1;
+    keyword_t kwd = (keyword_t)getkeyword();
+
+    switch (kwd) {
+    case K_NORTH:
+        dir = 0;
+        break;
+
+    case K_SOUTH:
+        dir = 1;
+        break;
+
+    case K_EAST:
+        dir = 2;
+        break;
+
+    case K_WEST:
+        dir = 3;
+        break;
+#if MAXDIRECTIONS > 5
+    case K_MIR:
+        dir = 4;
+        break;
+
+    case K_YDD:
+        dir = 5;
+        break;
+#endif
+    default:
+        dir = -1;
+    }
+
+    if (dir>=0) {
+        return r->connect[dir];
+    }
+    return 0;
+}
+
+int transform_kwd(int *x, int *y, keyword_t kwd)
+{
+    ql_iter qli;
+    int found = 0;
+    dirStruct *d;
+    assert(x || !"invalid reference to X coordinate");
+    assert(y || !"invalid reference to Y coordinate");
+    for (qli=qli_init(&dirData);qli_more(qli) && !found;) {
+        d = (dirStruct *)qli_next(&qli);
+        if (kwd == d->token) {
+            *x+=d->xMod;
+            *y+=d->yMod;
+            found = 1;
+        }
+    }
+    if (!found) {
+        return EINVAL;
+    }
+    if (config.width && config.height) {
+        if (*x<0) *x+=config.width;
+        if (*y<0) *y+=config.height;
+        if (*x>=config.width) *x-=config.width;
+        if (*y>=config.height) *y-=config.height;
+    }
+    return 0;
+}
+
+int transform(int *x, int *y, int direction)
+{
+    keyword_t kwd;
+    assert(direction<=MAXDIRECTIONS);
+    kwd = (direction<MAXDIRECTIONS) ? directions[direction] : MAXKEYWORDS;
+    return transform_kwd(x, y, kwd);
+}
+
+void add_direction(keyword_t t, int x, int y, const char *sName, const char *lName)
+{
+    dirStruct *d = (dirStruct *)calloc(1, sizeof(dirStruct));
+    d->token = t;
+    d->xMod = x;
+    d->yMod = y;
+    d->shortName = _strdup(sName);
+    d->longName = _strdup(lName);
+    ql_push(&dirData, d);
+}
+
+void read_directions()
+{
+#if MAXDIRECTIONS>5
+    add_direction(K_NORTH, 0, -1, "n", "north");
+    add_direction(K_SOUTH, 0, 1, "s", "south");
+    add_direction(K_WEST, -1, 0, "w", "west");
+    add_direction(K_EAST, 1, 0, "e", "east");
+    add_direction(K_MIR, -1, -1, "m", "mir");
+    add_direction(K_YDD, 1, 1, "y", "ydd");
+#else
+    add_direction(K_NORTH, 0, -1, "n", "north");
+    add_direction(K_SOUTH, 0, 1, "s", "south");
+    add_direction(K_WEST, -1, 0, "w", "west");
+    add_direction(K_EAST, 1, 0, "e", "east");
+#endif
+/*
+    add_direction(K_NORTH, 0, -1, "n", "north");
+    add_direction(K_NORTHWEST, -1, -1, "nw", "northwest");
+    add_direction(K_NORTHEAST, 1, -1, "ne", "northeast");
+    add_direction(K_SOUTH, 0, 1, "s", "south");
+    add_direction(K_SOUTHWEST, -1, 1, "sw", "southwest");
+    add_direction(K_SOUTHEAST, 1, 1, "se", "southeast");
+*/
 }
